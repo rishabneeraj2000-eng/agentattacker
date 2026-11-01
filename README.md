@@ -110,7 +110,7 @@ flowchart LR
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-username>/agentattacker.git
+git clone https://github.com/rishabneeraj2000-eng/agentattacker.git
 cd agentattacker
 python -m venv .venv
 .venv\Scripts\activate          # Windows  (macOS/Linux: source .venv/bin/activate)
