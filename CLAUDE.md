@@ -19,6 +19,7 @@ python run.py --target practice  # offline CLI scan
 - `redteam_agent.py` LangGraph graph (pick_next → execute → judge → mutate/report), `summarise()`, saved runs in `runs/`
 - `report.py` Markdown report and `RECOMMENDATIONS`
 - `server.py` REST API + serves `web/`
+- `examples/sample_chatbot.py` standalone Gemini chatbot ("Byte", port 8001) for testing the endpoint target
 - `web/` single-page app: `index.html`, `styles.css`, `app.js` (hash routes `#/`, `#/scan`, `#/report/<id>`, `#/reports`, `#/library`)
 
 ## Rules

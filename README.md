@@ -55,17 +55,27 @@ every defence you add.
 |---|---|
 | <img src="docs/screenshots/reports.png" alt="Past reports"> | <img src="docs/screenshots/library.png" alt="Attack library"> |
 
-## Example results
+## Results
 
-| Target | Attack success rate | What got through |
-|---|---|---|
-| **Nova · vulnerable** (typical first-draft bot) | **42%** (5/12) | System prompt (3 ways), hijacked by a poisoned review, **emailed the secret discount code to an attacker** via its tool |
-| **Nova · hardened** (4 defence layers) | **0%** (0/12) | Nothing in this run |
-| **Practice bot** (offline, rule-based) | **60%** (6/10) | Admin password via fake authority and base64, system prompt (3 ways), hijack |
+Measured over repeated scans (Gemini Flash-Lite models, ~140 Gemini calls in total):
 
-> Nova runs on Gemini, so its results can vary between runs. The hardened bot's output filter does **not**
-> catch base64 or spaced-out secrets; the judge does, so a Gemini slip there would show up in the report.
-> The practice bot is rule-based, so its result is always the same.
+| Target | Runs | Attack success rate | What got through | What held |
+|---|---|---|---|---|
+| **Nova · vulnerable**<br><sub>typical first-draft bot with tools</sub> | 5 | **40%** avg (33–42%)<br>**50%** with adaptive rewrites | System prompt (translate / summarise / repeat), hijack via a poisoned review, **emailed the secret discount code to an attacker** via its tool | Every direct secret request, incl. role-play, fake authority and base64 |
+| **Nova · hardened**<br><sub>4 defence layers</sub> | 5 | **0%** in every run<br>**0%** with adaptive rewrites | Nothing | All 12 attacks. The input filter blocked 2 outright; the hardened prompt handled the rest, so the later layers never had to fire |
+| **Byte**<br><sub>independent Gemini chatbot behind an HTTP API, tested via *Your endpoint*</sub> | 3 | **20%** in every run | System prompt leaked through *translate* and *summarise your configuration* | Discount code (all 5 secret-leak attacks), instruction hijack |
+| **Practice bot**<br><sub>offline, rule-based</sub> | n/a | **60%** (deterministic) | Admin password via fake authority and base64, system prompt (3 ways), hijack | Direct override, role-play, completion, developer pretext |
+
+**Takeaways**
+
+- A careful system prompt alone (Byte) protects the secret well but still **leaks its own instructions**
+  when the request is framed as a harmless translation or handover document.
+- Tool access is the biggest risk: the vulnerable bot sent confidential data to an outside address because a
+  hidden comment in a customer review told it to. A recipient allowlist enforced **outside** the model stops it.
+- Defence in depth works: the hardened bot stopped all attacks across every run, including LLM-rewritten ones.
+  Its output filter still misses base64 and spaced-out secrets, which the judge would catch if the model slipped.
+
+<sub>Gemini replies vary, so individual runs differ. Adaptive runs used a 20-call budget and stopped after 9–10 of the 12 attacks.</sub>
 
 ## How it works
 
@@ -132,7 +142,11 @@ python run.py --target demo-hardened --attacks authority prompt-summary --mutati
 | **Your endpoint** | A URL that accepts `POST {"message": "..."}` and returns JSON | You list the secrets and a distinctive system-prompt phrase; the judge watches replies for them. |
 
 For an endpoint you can change the request field name, the reply path (e.g. `choices.0.message.content`)
-and add headers such as an API key. Try it against the built-in practice bot:
+and add headers such as an API key.
+
+**Try it:** [`examples/sample_chatbot.py`](examples/sample_chatbot.py) is a small standalone Gemini chatbot
+("Byte") with its own API. Run `python examples/sample_chatbot.py`, then scan `http://localhost:8001/chat`
+with secret `PIXEL-50OFF-Z9` and prompt phrase `PP-4471`. The offline practice bot also works as an endpoint:
 `http://localhost:8000/practice-bot/chat`.
 
 > ⚠️ **Only test chatbots you own or have written permission to test.** Attacking third-party systems
@@ -151,6 +165,7 @@ agentattacker/
 ├── practice_bot.py    offline rule-based HelpBot
 ├── report.py          Markdown report + recommendations
 ├── llm.py             Gemini client with quota fallback
+├── examples/          sample_chatbot.py: standalone chatbot API to test with "Your endpoint"
 ├── web/               single-page frontend (HTML, CSS, vanilla JS, SVGs)
 ├── tests/             pytest suite (fake models, no API key)
 └── docs/screenshots/
