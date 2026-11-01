@@ -1,0 +1,15 @@
+[project]
+name = "agentattacker"
+version = "1.0.0"
+description = "Automated, adaptive red-teaming for LLM chatbots, mapped to the OWASP Top 10 for LLM Applications."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Rishab" }]
+keywords = ["llm", "security", "red-teaming", "prompt-injection", "owasp", "langgraph"]
+# Dependencies live in requirements.txt / requirements-dev.txt (this is an app, not an installable package).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
